@@ -1,22 +1,27 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: LIFE WITH AI - EdTech Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: auth
+  - name: users
+  - name: courses
+  - name: lessons
+  - name: pdfs
+  - name: orders
+  - name: payments
+  - name: admin
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +29,814 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── AUTH ────────────────────────────────────────────────────────────────────
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/verify-otp:
+    post:
+      operationId: verifyOtp
+      tags: [auth]
+      summary: Verify email OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpInput"
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid OTP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/resend-otp:
+    post:
+      operationId: resendOtp
+      tags: [auth]
+      summary: Resend OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResendOtpInput"
+      responses:
+        "200":
+          description: OTP sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/forgot-password:
+    post:
+      operationId: forgotPassword
+      tags: [auth]
+      summary: Send password reset email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordInput"
+      responses:
+        "200":
+          description: Email sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/reset-password:
+    post:
+      operationId: resetPassword
+      tags: [auth]
+      summary: Reset password with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordInput"
+      responses:
+        "200":
+          description: Password reset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── COURSES ─────────────────────────────────────────────────────────────────
+  /courses:
+    get:
+      operationId: listCourses
+      tags: [courses]
+      summary: List all published courses
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseListResponse"
+    post:
+      operationId: createCourse
+      tags: [courses]
+      summary: Create a new course (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+
+  /courses/{id}:
+    get:
+      operationId: getCourse
+      tags: [courses]
+      summary: Get a course by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateCourse
+      tags: [courses]
+      summary: Update a course (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+    delete:
+      operationId: deleteCourse
+      tags: [courses]
+      summary: Delete a course (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  /courses/{id}/lessons:
+    post:
+      operationId: addLesson
+      tags: [lessons]
+      summary: Add a lesson to a course (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LessonInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lesson"
+
+  /courses/{id}/lessons/{lessonId}:
+    patch:
+      operationId: updateLesson
+      tags: [lessons]
+      summary: Update a lesson (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: lessonId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LessonUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lesson"
+    delete:
+      operationId: deleteLesson
+      tags: [lessons]
+      summary: Delete a lesson (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: lessonId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  /courses/{id}/progress:
+    get:
+      operationId: getCourseProgress
+      tags: [courses]
+      summary: Get user progress for a course
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressResponse"
+    post:
+      operationId: updateCourseProgress
+      tags: [courses]
+      summary: Update lesson completion
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProgressInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressResponse"
+
+  /courses/{id}/stream/{lessonId}:
+    get:
+      operationId: getLessonStream
+      tags: [courses]
+      summary: Get secure streaming URL for a lesson video
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: lessonId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── PDF STORE ────────────────────────────────────────────────────────────────
+  /pdfs:
+    get:
+      operationId: listPdfs
+      tags: [pdfs]
+      summary: List all PDFs
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PdfListResponse"
+    post:
+      operationId: createPdf
+      tags: [pdfs]
+      summary: Create a PDF listing (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PdfInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pdf"
+
+  /pdfs/{id}:
+    get:
+      operationId: getPdf
+      tags: [pdfs]
+      summary: Get PDF details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pdf"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updatePdf
+      tags: [pdfs]
+      summary: Update a PDF (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PdfUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pdf"
+    delete:
+      operationId: deletePdf
+      tags: [pdfs]
+      summary: Delete a PDF (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  /pdfs/{id}/download:
+    get:
+      operationId: downloadPdf
+      tags: [pdfs]
+      summary: Get secure download URL (purchasers only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DownloadResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── PAYMENTS / RAZORPAY ──────────────────────────────────────────────────────
+  /payments/create-order:
+    post:
+      operationId: createPaymentOrder
+      tags: [payments]
+      summary: Create a Razorpay order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentOrderInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentOrderResponse"
+
+  /payments/verify:
+    post:
+      operationId: verifyPayment
+      tags: [payments]
+      summary: Verify Razorpay payment signature
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentVerifyInput"
+      responses:
+        "200":
+          description: Payment verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentVerifyResponse"
+        "400":
+          description: Invalid signature
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── ORDERS ───────────────────────────────────────────────────────────────────
+  /orders:
+    get:
+      operationId: listMyOrders
+      tags: [orders]
+      summary: Get current user's orders
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get a single order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  # ── ADMIN ────────────────────────────────────────────────────────────────────
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Admin dashboard stats
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/users:
+    get:
+      operationId: listUsers
+      tags: [admin]
+      summary: List all users (admin)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+
+  /admin/users/{id}:
+    patch:
+      operationId: updateUser
+      tags: [admin]
+      summary: Update user (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteUser
+      tags: [admin]
+      summary: Delete user (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  /admin/orders:
+    get:
+      operationId: listAllOrders
+      tags: [admin]
+      summary: List all orders (admin)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOrderListResponse"
+
+  /admin/revenue:
+    get:
+      operationId: getRevenueStats
+      tags: [admin]
+      summary: Revenue analytics
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevenueStats"
+
+  /upload/image:
+    post:
+      operationId: uploadImage
+      tags: [admin]
+      summary: Upload image to Cloudinary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResponse"
+
+  /upload/video:
+    post:
+      operationId: uploadVideo
+      tags: [admin]
+      summary: Upload video to Cloudinary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResponse"
+
+  /upload/pdf:
+    post:
+      operationId: uploadPdfFile
+      tags: [admin]
+      summary: Upload PDF file to Cloudinary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +844,639 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    # ── AUTH ──────────────────────────────────────────────────────────────────
+    RegisterInput:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          minLength: 2
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    OtpInput:
+      type: object
+      required: [email, otp]
+      properties:
+        email:
+          type: string
+        otp:
+          type: string
+
+    ResendOtpInput:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+
+    ForgotPasswordInput:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+
+    ResetPasswordInput:
+      type: object
+      required: [token, password]
+      properties:
+        token:
+          type: string
+        password:
+          type: string
+          minLength: 6
+
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+        message:
+          type: string
+
+    User:
+      type: object
+      required: [id, name, email, role, isVerified, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [student, admin]
+        isVerified:
+          type: boolean
+        avatar:
+          type: ["string", "null"]
+        purchasedCourses:
+          type: array
+          items:
+            type: string
+        purchasedPdfs:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+          enum: [student, admin]
+        isVerified:
+          type: boolean
+
+    UserListResponse:
+      type: object
+      required: [users, total, page, pages]
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        total:
+          type: integer
+        page:
+          type: integer
+        pages:
+          type: integer
+
+    # ── COURSES ───────────────────────────────────────────────────────────────
+    Course:
+      type: object
+      required: [id, title, thumbnail, description, price, category, difficulty, instructor, isPublished, createdAt]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        thumbnail:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        originalPrice:
+          type: ["number", "null"]
+        category:
+          type: string
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        instructor:
+          type: string
+        totalLessons:
+          type: integer
+        totalDuration:
+          type: integer
+        isPublished:
+          type: boolean
+        rating:
+          type: ["number", "null"]
+        totalStudents:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    CourseDetail:
+      type: object
+      required: [id, title, thumbnail, description, price, category, difficulty, instructor, lessons, isPublished, createdAt]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        thumbnail:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        originalPrice:
+          type: ["number", "null"]
+        category:
+          type: string
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        instructor:
+          type: string
+        totalDuration:
+          type: integer
+        isPublished:
+          type: boolean
+        rating:
+          type: ["number", "null"]
+        totalStudents:
+          type: integer
+        isPurchased:
+          type: boolean
+        lessons:
+          type: array
+          items:
+            $ref: "#/components/schemas/Lesson"
+        createdAt:
+          type: string
+          format: date-time
+
+    CourseInput:
+      type: object
+      required: [title, description, price, category, difficulty, instructor]
+      properties:
+        title:
+          type: string
+        thumbnail:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        originalPrice:
+          type: number
+        category:
+          type: string
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        instructor:
+          type: string
+        isPublished:
+          type: boolean
+
+    CourseUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        thumbnail:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        originalPrice:
+          type: ["number", "null"]
+        category:
+          type: string
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        instructor:
+          type: string
+        isPublished:
+          type: boolean
+
+    CourseListResponse:
+      type: object
+      required: [courses, total, page, pages]
+      properties:
+        courses:
+          type: array
+          items:
+            $ref: "#/components/schemas/Course"
+        total:
+          type: integer
+        page:
+          type: integer
+        pages:
+          type: integer
+
+    Lesson:
+      type: object
+      required: [id, title, duration, order]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        videoUrl:
+          type: ["string", "null"]
+        videoPublicId:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        duration:
+          type: integer
+        order:
+          type: integer
+        isPreview:
+          type: boolean
+
+    LessonInput:
+      type: object
+      required: [title, duration, order]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        videoUrl:
+          type: string
+        videoPublicId:
+          type: string
+        notes:
+          type: string
+        duration:
+          type: integer
+        order:
+          type: integer
+        isPreview:
+          type: boolean
+
+    LessonUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        videoUrl:
+          type: string
+        videoPublicId:
+          type: string
+        notes:
+          type: string
+        duration:
+          type: integer
+        order:
+          type: integer
+        isPreview:
+          type: boolean
+
+    ProgressResponse:
+      type: object
+      required: [courseId, completedLessons, totalLessons, percentage]
+      properties:
+        courseId:
+          type: string
+        completedLessons:
+          type: array
+          items:
+            type: string
+        totalLessons:
+          type: integer
+        percentage:
+          type: number
+
+    ProgressInput:
+      type: object
+      required: [lessonId, completed]
+      properties:
+        lessonId:
+          type: string
+        completed:
+          type: boolean
+
+    StreamResponse:
+      type: object
+      required: [streamUrl]
+      properties:
+        streamUrl:
+          type: string
+
+    # ── PDFs ──────────────────────────────────────────────────────────────────
+    Pdf:
+      type: object
+      required: [id, title, thumbnail, description, price, category, createdAt]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        thumbnail:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        originalPrice:
+          type: ["number", "null"]
+        category:
+          type: string
+        fileUrl:
+          type: ["string", "null"]
+        isPurchased:
+          type: boolean
+        pageCount:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    PdfInput:
+      type: object
+      required: [title, description, price, category]
+      properties:
+        title:
+          type: string
+        thumbnail:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        originalPrice:
+          type: number
+        category:
+          type: string
+        fileUrl:
+          type: string
+        filePublicId:
+          type: string
+        pageCount:
+          type: integer
+
+    PdfUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        thumbnail:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        originalPrice:
+          type: ["number", "null"]
+        category:
+          type: string
+        fileUrl:
+          type: string
+        filePublicId:
+          type: string
+        pageCount:
+          type: ["integer", "null"]
+
+    PdfListResponse:
+      type: object
+      required: [pdfs, total, page, pages]
+      properties:
+        pdfs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Pdf"
+        total:
+          type: integer
+        page:
+          type: integer
+        pages:
+          type: integer
+
+    DownloadResponse:
+      type: object
+      required: [downloadUrl]
+      properties:
+        downloadUrl:
+          type: string
+
+    # ── PAYMENTS ──────────────────────────────────────────────────────────────
+    PaymentOrderInput:
+      type: object
+      required: [itemId, itemType]
+      properties:
+        itemId:
+          type: string
+        itemType:
+          type: string
+          enum: [course, pdf]
+
+    PaymentOrderResponse:
+      type: object
+      required: [orderId, amount, currency, keyId]
+      properties:
+        orderId:
+          type: string
+        amount:
+          type: integer
+        currency:
+          type: string
+        keyId:
+          type: string
+
+    PaymentVerifyInput:
+      type: object
+      required: [razorpayOrderId, razorpayPaymentId, razorpaySignature, itemId, itemType]
+      properties:
+        razorpayOrderId:
+          type: string
+        razorpayPaymentId:
+          type: string
+        razorpaySignature:
+          type: string
+        itemId:
+          type: string
+        itemType:
+          type: string
+          enum: [course, pdf]
+
+    PaymentVerifyResponse:
+      type: object
+      required: [success, orderId]
+      properties:
+        success:
+          type: boolean
+        orderId:
+          type: string
+        message:
+          type: string
+
+    # ── ORDERS ────────────────────────────────────────────────────────────────
+    Order:
+      type: object
+      required: [id, itemId, itemType, itemTitle, amount, status, createdAt]
+      properties:
+        id:
+          type: string
+        itemId:
+          type: string
+        itemType:
+          type: string
+          enum: [course, pdf]
+        itemTitle:
+          type: string
+        itemThumbnail:
+          type: ["string", "null"]
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [pending, completed, failed]
+        razorpayOrderId:
+          type: ["string", "null"]
+        razorpayPaymentId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── ADMIN ─────────────────────────────────────────────────────────────────
+    AdminStats:
+      type: object
+      required: [totalUsers, totalCourses, totalPdfs, totalOrders, totalRevenue, recentOrders, topCourses]
+      properties:
+        totalUsers:
+          type: integer
+        totalCourses:
+          type: integer
+        totalPdfs:
+          type: integer
+        totalOrders:
+          type: integer
+        totalRevenue:
+          type: number
+        recentOrders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
+        topCourses:
+          type: array
+          items:
+            $ref: "#/components/schemas/Course"
+
+    AdminOrderListResponse:
+      type: object
+      required: [orders, total, page, pages]
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
+        total:
+          type: integer
+        page:
+          type: integer
+        pages:
+          type: integer
+
+    RevenueStats:
+      type: object
+      required: [totalRevenue, monthlyRevenue, courseRevenue, pdfRevenue]
+      properties:
+        totalRevenue:
+          type: number
+        monthlyRevenue:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthlyRevenue"
+        courseRevenue:
+          type: number
+        pdfRevenue:
+          type: number
+
+    MonthlyRevenue:
+      type: object
+      required: [month, revenue, orders]
+      properties:
+        month:
+          type: string
+        revenue:
+          type: number
+        orders:
+          type: integer
+
+    # ── UPLOAD ────────────────────────────────────────────────────────────────
+    UploadInput:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: string
+          description: Base64 encoded file data or URL
+
+    UploadResponse:
+      type: object
+      required: [url, publicId]
+      properties:
+        url:
+          type: string
+        publicId:
+          type: string
+        duration:
+          type: ["integer", "null"]

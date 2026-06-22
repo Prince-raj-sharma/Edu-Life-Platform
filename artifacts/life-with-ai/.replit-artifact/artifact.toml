@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "LIFE WITH AI"
+version = "1.0.0"
+id = "artifacts/life-with-ai"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23358
+
+[services.development]
+run = "pnpm --filter @workspace/life-with-ai run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/life-with-ai", "run", "build" ]
+publicDir = "artifacts/life-with-ai/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23358"
+BASE_PATH = "/"

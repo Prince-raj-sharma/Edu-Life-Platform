@@ -3,6 +3,15 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { connectDB } from "./lib/mongodb";
+import { seedAdmin } from "./lib/seed";
+
+connectDB()
+  .then(() => seedAdmin())
+  .catch((err) => {
+    logger.error({ err }, "Failed to connect to MongoDB");
+    process.exit(1);
+  });
 
 const app: Express = express();
 
