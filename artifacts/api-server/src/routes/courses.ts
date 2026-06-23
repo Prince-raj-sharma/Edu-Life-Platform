@@ -279,13 +279,24 @@ router.get("/courses/:id/stream/:lessonId", authenticate, async (req: AuthReques
     return;
   }
 
-  if (!lesson.videoPublicId) {
+  // Support both direct URL (paste) and Cloudinary publicId (upload)
+  if (lesson.videoUrl && !lesson.videoPublicId) {
+    res.json({ streamUrl: lesson.videoUrl });
+    return;
+  }
+
+  if (!lesson.videoPublicId && !lesson.videoUrl) {
     res.status(404).json({ error: "No video for this lesson" });
     return;
   }
 
-  const streamUrl = await getSignedStreamUrl(lesson.videoPublicId);
-  res.json({ streamUrl });
+  if (lesson.videoPublicId) {
+    const streamUrl = await getSignedStreamUrl(lesson.videoPublicId);
+    res.json({ streamUrl });
+    return;
+  }
+
+  res.json({ streamUrl: lesson.videoUrl });
 });
 
 export default router;
