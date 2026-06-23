@@ -12,17 +12,19 @@ export async function seedAdmin(): Promise<void> {
 
   const existing = await User.findOne({ email: email.toLowerCase() });
   if (existing) {
-    if (existing.role !== "admin") {
+    // Ensure role and verification are correct, but don't overwrite the password
+    if (existing.role !== "admin" || !existing.isVerified) {
       existing.role = "admin";
       existing.isVerified = true;
       await existing.save();
-      logger.info({ email }, "Existing user promoted to admin");
+      logger.info({ email }, "Admin user promoted/verified");
     } else {
       logger.info({ email }, "Admin user already exists");
     }
     return;
   }
 
+  // Create fresh admin with password from env
   await User.create({
     name: "Admin",
     email: email.toLowerCase(),
