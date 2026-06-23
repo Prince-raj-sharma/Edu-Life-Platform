@@ -5,8 +5,8 @@ import { ArrowRight, BookOpen, Shield, Zap, FileText } from "lucide-react";
 import { useListCourses, useListPdfs } from "@workspace/api-client-react";
 
 export default function Home() {
-  const { data: coursesData, isLoading: isLoadingCourses } = useListCourses({ query: { queryKey: ["listCourses", { limit: 3 }] } });
-  const { data: pdfsData, isLoading: isLoadingPdfs } = useListPdfs({ query: { queryKey: ["listPdfs", { limit: 3 }] } });
+  const { data: coursesData, isLoading: isLoadingCourses } = useListCourses()
+  const { data: pdfsData, isLoading: isLoadingPdfs } = useListPdfs()
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -96,7 +96,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {coursesData?.courses.slice(0, 3).map((course) => (
+              {(coursesData?.courses || []).slice(0, 3).map((course) => (
                 <Card key={course.id} className="overflow-hidden hover:shadow-md transition-all group flex flex-col">
                   <div className="h-48 overflow-hidden bg-muted relative">
                     <img 
@@ -161,7 +161,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-              {pdfsData?.pdfs.slice(0, 4).map((pdf) => (
+              {(pdfsData?.pdfs || []).slice(0, 4).map((pdf) => (
                 <Card key={pdf.id} className="overflow-hidden hover:shadow-md transition-all group flex flex-col">
                   <div className="aspect-[3/4] overflow-hidden bg-muted relative border-b border-border/50">
                     <img 
