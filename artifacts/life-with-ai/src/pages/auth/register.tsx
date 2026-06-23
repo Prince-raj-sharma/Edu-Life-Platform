@@ -10,8 +10,12 @@ import { useToast } from "@/hooks/use-toast";
 
 const schema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email"),
+  email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((d) => d.password === d.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
 type FormData = z.infer<typeof schema>;
@@ -24,17 +28,23 @@ export default function RegisterPage() {
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", email: "", password: "" },
+    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
   });
 
   const onSubmit = async (data: FormData) => {
     try {
-      const res = await registerMutation.mutateAsync({ data });
+      const res = await registerMutation.mutateAsync({
+        data: { name: data.name, email: data.email, password: data.password },
+      });
       login(res.token, res.user);
-      toast({ title: "Account created!", description: "Please verify your email with the OTP sent." });
-      setLocation(`/auth/verify-otp?email=${encodeURIComponent(data.email)}`);
+      toast({ title: "Account created!", description: `Welcome, ${res.user.name}!` });
+      setLocation("/dashboard");
     } catch (err: any) {
-      toast({ title: "Registration failed", description: err?.data?.error || "An error occurred", variant: "destructive" });
+      toast({
+        title: "Registration failed",
+        description: err?.data?.error || "An error occurred. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -52,33 +62,58 @@ export default function RegisterPage() {
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
-                  <FormControl><Input data-testid="input-name" placeholder="John Doe" {...field} /></FormControl>
+                  <FormControl>
+                    <Input placeholder="John Doe" autoComplete="name" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
+
               <FormField control={form.control} name="email" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Email</FormLabel>
-                  <FormControl><Input data-testid="input-email" type="email" placeholder="you@example.com" {...field} /></FormControl>
+                  <FormControl>
+                    <Input type="email" placeholder="you@example.com" autoComplete="email" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
+
               <FormField control={form.control} name="password" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
-                  <FormControl><Input data-testid="input-password" type="password" placeholder="Min. 6 characters" {...field} /></FormControl>
+                  <FormControl>
+                    <Input type="password" placeholder="Min. 6 characters" autoComplete="new-password" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
-              <button data-testid="button-submit" type="submit" disabled={registerMutation.isPending} className="w-full bg-primary text-primary-foreground rounded-lg py-2.5 font-semibold hover:opacity-90 transition-opacity disabled:opacity-50">
-                {registerMutation.isPending ? "Creating account..." : "Create Account"}
+
+              <FormField control={form.control} name="confirmPassword" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Re-enter your password" autoComplete="new-password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+
+              <button
+                type="submit"
+                disabled={registerMutation.isPending}
+                className="w-full bg-primary text-primary-foreground rounded-lg py-2.5 font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 mt-2"
+              >
+                {registerMutation.isPending ? "Creating account…" : "Create Account"}
               </button>
             </form>
           </Form>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Already have an account?{" "}
-            <Link href="/auth/login" className="text-primary font-medium hover:underline">Sign in</Link>
+            <Link href="/auth/login" className="text-primary font-medium hover:underline">
+              Sign in
+            </Link>
           </p>
         </div>
       </div>
